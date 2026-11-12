@@ -1,13 +1,28 @@
 
 using Microsoft.EntityFrameworkCore;
-using SchoolAdmission.Infrastructure.Persistence;
+using SchoolAdmission.API.Middlewares;
 using SchoolAdmission.Application.Interfaces;
 using SchoolAdmission.Application.Services;
+using SchoolAdmission.Infrastructure.Persistence;
 using SchoolAdmission.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Controllers
+builder.Services.AddControllers();
+
+// CORS for the React development server
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// PostgreSQL
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException(
@@ -16,10 +31,8 @@ var connectionString =
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Repository registration
-builder.Services.AddScoped<
-    IAdmissionRepository,
-    AdmissionRepository>();
+// Repository registration(Dependency injection)
+builder.Services.AddScoped<IAdmissionRepository, AdmissionRepository>();
 
 // Hold duration: default 600 seconds (10 minutes).
 var holdDurationSeconds = int.TryParse(
@@ -40,20 +53,12 @@ builder.Services.AddScoped<IAdmissionService>(serviceProvider =>
         serviceProvider.GetRequiredService<IAdmissionRepository>(),
         TimeSpan.FromSeconds(holdDurationSeconds)));
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+// Middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseCors("Frontend");
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

@@ -1,3 +1,4 @@
+
 # Build React application
 FROM node:22-alpine AS build
 
@@ -9,9 +10,13 @@ RUN npm ci
 
 COPY . .
 
+# Configure API URL at build time
+ARG VITE_API_BASE_URL=http://localhost:8080
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 RUN npm run build
 
-# Serve the production build
+# Serve production build using Nginx
 FROM nginx:alpine AS final
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf

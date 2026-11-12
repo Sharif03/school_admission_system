@@ -1,122 +1,278 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+
+import { useCallback, useEffect, useState } from "react";
+import { api } from "./services/api";
+import ClassCard from "./components/ClassCard";
+import HoldCard from "./components/HoldCard";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [classes, setClasses] = useState([]);
+  const [holds, setHolds] = useState([]);
+
+  const [studentId, setStudentId] = useState("");
+  const [className, setClassName] = useState("");
+  const [totalSeats, setTotalSeats] = useState(30);
+
+  const [loading, setLoading] = useState(false);
+  const [busyHoldId, setBusyHoldId] = useState(null);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const validStudentId = /^[0-9]{17}$/.test(studentId.trim());
+
+  const refreshData = useCallback(async () => {
+    try {
+      const classData = await api.getClasses();
+      setClasses(classData);
+
+      if (validStudentId) {
+        const holdData = await api.getMyHolds(studentId.trim());
+        setHolds(holdData);
+      } else {
+        setHolds([]);
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [studentId, validStudentId]);
+
+  useEffect(() => {
+    refreshData();
+
+    const intervalId = setInterval(refreshData, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [refreshData]);
+
+  async function handleCreateClass(event) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    try {
+      await api.createClass({
+        name: className.trim(),
+        totalSeats: Number(totalSeats),
+      });
+
+      setClassName("");
+      setTotalSeats(30);
+      setMessage("Class created successfully.");
+
+      await refreshData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCreateHold(classId) {
+    if (!validStudentId) {
+      setError("Enter a valid 17-digit Student ID first.");
+      return;
+    }
+
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    try {
+      await api.createHold(classId, studentId.trim());
+
+      setMessage("Your seat has been held successfully.");
+      await refreshData();
+    } catch (err) {
+      setError(err.message);
+      await refreshData();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleConfirm(holdId) {
+    setError("");
+    setMessage("");
+    setBusyHoldId(holdId);
+
+    try {
+      await api.confirmHold(holdId, studentId.trim());
+
+      setMessage("Your admission has been confirmed.");
+      await refreshData();
+    } catch (err) {
+      setError(err.message);
+      await refreshData();
+    } finally {
+      setBusyHoldId(null);
+    }
+  }
+
+  async function handleCancel(holdId) {
+    setError("");
+    setMessage("");
+    setBusyHoldId(holdId);
+
+    try {
+      await api.cancelHold(holdId, studentId.trim());
+
+      setMessage("Your reservation has been cancelled.");
+      await refreshData();
+    } catch (err) {
+      setError(err.message);
+      await refreshData();
+    } finally {
+      setBusyHoldId(null);
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
+    <main className="app-container">
+      <header className="app-header">
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+          <p className="eyebrow">SCHOOL ADMISSION SYSTEM</p>
+          <h1>Admission Portal</h1>
+          <p className="subtitle">
+            Manage classes and reserve admission seats.
           </p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+
+        <button className="refresh-button" onClick={refreshData}>
+          Refresh
         </button>
+      </header>
+
+      {error && <div className="alert error-alert">{error}</div>}
+      {message && <div className="alert success-alert">{message}</div>}
+
+      <section className="panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">ADMINISTRATION</p>
+            <h2>Create a Class</h2>
+          </div>
+        </div>
+
+        <form className="class-form" onSubmit={handleCreateClass}>
+          <div className="form-group">
+            <label htmlFor="className">Class Name</label>
+            <input
+              id="className"
+              value={className}
+              onChange={(event) => setClassName(event.target.value)}
+              placeholder="e.g. Class One"
+              maxLength={100}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="totalSeats">Total Seats</label>
+            <input
+              id="totalSeats"
+              type="number"
+              min="1"
+              value={totalSeats}
+              onChange={(event) => setTotalSeats(event.target.value)}
+              required
+            />
+          </div>
+
+          <button
+            className="primary-button create-button"
+            type="submit"
+            disabled={loading}
+          >
+            Create Class
+          </button>
+        </form>
       </section>
 
-      <div className="ticks"></div>
+      <section className="panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">AVAILABLE CLASSES</p>
+            <h2>Admission Classes</h2>
+          </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+          <span className="section-count">
+            {classes.length} classes
+          </span>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+
+        {classes.length === 0 ? (
+          <p className="empty-state">No classes have been created yet.</p>
+        ) : (
+          <div className="class-grid">
+            {classes.map((admissionClass) => (
+              <ClassCard
+                key={admissionClass.id}
+                admissionClass={admissionClass}
+                onHold={handleCreateHold}
+                disabled={!validStudentId || loading}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <section className="panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">PARENT PORTAL</p>
+            <h2>My Applications</h2>
+          </div>
+        </div>
+
+        <div className="form-group student-id-group">
+          <label htmlFor="studentId">17-digit Student ID</label>
+          <input
+            id="studentId"
+            value={studentId}
+            onChange={(event) => {
+              setStudentId(event.target.value.replace(/\D/g, "").slice(0, 17));
+              setError("");
+            }}
+            placeholder="Enter your 17-digit Student ID"
+            inputMode="numeric"
+            maxLength={17}
+          />
+
+          <small>
+            {studentId.length}/17 digits
+          </small>
+        </div>
+
+        {!validStudentId ? (
+          <p className="empty-state">
+            Enter your complete Student ID to view your applications and
+            reserve a seat.
+          </p>
+        ) : holds.length === 0 ? (
+          <p className="empty-state">
+            You have no admission applications yet.
+          </p>
+        ) : (
+          <div className="hold-list">
+            {holds.map((hold) => (
+              <HoldCard
+                key={hold.holdId}
+                hold={hold}
+                onConfirm={handleConfirm}
+                onCancel={handleCancel}
+                busy={busyHoldId === hold.holdId}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <footer className="app-footer">
+        School Admission System · Seat availability refreshes automatically.
+      </footer>
+    </main>
+  );
 }
 
-export default App
+export default App;

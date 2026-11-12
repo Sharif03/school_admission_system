@@ -55,6 +55,15 @@ builder.Services.AddScoped<IAdmissionService>(serviceProvider =>
 
 var app = builder.Build();
 
+// Apply pending database migrations at startup
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContext = scope.ServiceProvider
+        .GetRequiredService<ApplicationDbContext>();
+
+    await dbContext.Database.MigrateAsync();
+}
+
 // Middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("Frontend");

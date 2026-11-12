@@ -1,7 +1,39 @@
 services:
-  backend:
-    # existing backend configuration...
 
+  postgres:
+    image: postgres:17-alpine
+    container_name: school-admission-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: school_admission_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d school_admission_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/SchoolAdmission.API/Dockerfile
+    container_name: school-admission-api
+    restart: unless-stopped
     environment:
       ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
       HOLD_DURATION_SECONDS: 600
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=school_admission_db;Username=postgres;Password=postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

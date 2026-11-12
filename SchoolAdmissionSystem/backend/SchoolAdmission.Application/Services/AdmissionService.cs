@@ -229,17 +229,11 @@ public class AdmissionService : IAdmissionService
     private static void ValidateStudentId(string studentId)
     {
         if (string.IsNullOrWhiteSpace(studentId))
-            throw new ArgumentException(
-                "Student ID is required.");
+            throw new ArgumentException("Student ID is required.");
 
-        studentId = studentId.Trim();
+        var normalized = studentId.Trim();
 
-        if (studentId.Length != 17)
-            throw new ArgumentException(
-                "Student ID must be exactly 17 digits.");
-
-        if (!studentId.All(char.IsDigit))
-            throw new ArgumentException(
-                "Student ID must contain digits only.");
+        if (normalized.Length != 17 || !normalized.All(char.IsAsciiDigit))
+            throw new ArgumentException("Student ID must be exactly 17 digits.");
     }
 }

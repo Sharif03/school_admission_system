@@ -1,22 +1,27 @@
 
-# Build React application
+# Stage 1: Build React application
 FROM node:22-alpine AS build
 
 WORKDIR /app
 
+# Copy package files first for better Docker layer caching
 COPY package*.json ./
 
+# Install dependencies
 RUN npm ci
 
+# Copy frontend source code
 COPY . .
 
-# Configure API URL at build time
-ARG VITE_API_BASE_URL=http://localhost:5056
+# API URL used by the browser in Docker deployment
+ARG VITE_API_BASE_URL=http://localhost:8080
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
+# Build production React application
 RUN npm run build
 
-# Serve production build using Nginx
+
+# Stage 2: Serve React application using Nginx
 FROM nginx:alpine AS final
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf

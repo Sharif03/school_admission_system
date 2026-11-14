@@ -6,10 +6,16 @@
 }
 
 .app-header,
-.section-heading,
-.card-heading {
+.section-heading {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card-heading {
+  display: flex;
+  align-items: flex-start; /* Aligns title and badge at the top */
   justify-content: space-between;
   gap: 16px;
 }
@@ -62,6 +68,8 @@
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap; /* Prevents text from wrapping to a new line */
+  flex-shrink: 0;      /* Prevents the flexbox layout from squeezing the badge */
 }
 
 .class-form {
@@ -139,9 +147,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: 18px;
+  align-items: stretch; /* Forces all cards to be the same height */
 }
 
-.class-card,
+.class-card {
+  display: flex;
+  flex-direction: column;
+}
+
 .hold-card {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -194,6 +207,7 @@
 
 .class-card > .primary-button {
   width: 100%;
+  margin-top: auto; /* Pushes the button to the bottom of the card */
 }
 
 .student-id-group {

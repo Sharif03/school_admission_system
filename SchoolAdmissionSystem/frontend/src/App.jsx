@@ -1,8 +1,9 @@
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./services/api";
 import ClassCard from "./components/ClassCard";
 import HoldCard from "./components/HoldCard";
+import Toast from "./components/Toast";
 import "./App.css";
 
 function App() {
@@ -11,12 +12,34 @@ function App() {
 
   const [studentId, setStudentId] = useState("");
   const [className, setClassName] = useState("");
-  const [totalSeats, setTotalSeats] = useState(30);
+  const [totalSeats, setTotalSeats] = useState(120);
 
   const [loading, setLoading] = useState(false);
   const [busyHoldId, setBusyHoldId] = useState(null);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+
+  // --- toaster state ---
+  const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
+
+  const dismissToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
+  const showToast = useCallback((type, text) => {
+    const message = String(text ?? "").trim();
+    if (!message) return;
+
+    toastIdRef.current += 1;
+    const id = toastIdRef.current;
+
+    setToasts((prev) => {
+      // Don't stack the same message twice (e.g. a failing poll every 5s)
+      if (prev.some((toast) => toast.type === type && toast.message === message)) {
+        return prev;
+      }
+      return [...prev, { id, type, message }];
+    });
+  }, []);
 
   const validStudentId = /^[0-9]{17}$/.test(studentId.trim());
 
@@ -32,9 +55,9 @@ function App() {
         setHolds([]);
       }
     } catch (err) {
-      setError(err.message);
+      showToast("error", err.message);
     }
-  }, [studentId, validStudentId]);
+  }, [studentId, validStudentId, showToast]);
 
   useEffect(() => {
     refreshData();
@@ -46,8 +69,6 @@ function App() {
 
   async function handleCreateClass(event) {
     event.preventDefault();
-    setError("");
-    setMessage("");
     setLoading(true);
 
     try {
@@ -57,12 +78,12 @@ function App() {
       });
 
       setClassName("");
-      setTotalSeats(30);
-      setMessage("Class created successfully.");
+      setTotalSeats(120);
+      showToast("success", "Class created successfully.");
 
       await refreshData();
     } catch (err) {
-      setError(err.message);
+      showToast("error", err.message);
     } finally {
       setLoading(false);
     }
@@ -70,21 +91,19 @@ function App() {
 
   async function handleCreateHold(classId) {
     if (!validStudentId) {
-      setError("Enter a valid 17-digit Student ID first.");
+      showToast("error", "Enter a valid 17-digit Student ID first.");
       return;
     }
 
-    setError("");
-    setMessage("");
     setLoading(true);
 
     try {
       await api.createHold(classId, studentId.trim());
 
-      setMessage("Your seat has been held successfully.");
+      showToast("success", "Your seat has been held successfully.");
       await refreshData();
     } catch (err) {
-      setError(err.message);
+      showToast("error", err.message);
       await refreshData();
     } finally {
       setLoading(false);
@@ -92,17 +111,15 @@ function App() {
   }
 
   async function handleConfirm(holdId) {
-    setError("");
-    setMessage("");
     setBusyHoldId(holdId);
 
     try {
       await api.confirmHold(holdId, studentId.trim());
 
-      setMessage("Your admission has been confirmed.");
+      showToast("success", "Your admission has been confirmed.");
       await refreshData();
     } catch (err) {
-      setError(err.message);
+      showToast("error", err.message);
       await refreshData();
     } finally {
       setBusyHoldId(null);
@@ -110,17 +127,15 @@ function App() {
   }
 
   async function handleCancel(holdId) {
-    setError("");
-    setMessage("");
     setBusyHoldId(holdId);
 
     try {
       await api.cancelHold(holdId, studentId.trim());
 
-      setMessage("Your reservation has been cancelled.");
+      showToast("success", "Your reservation has been cancelled.");
       await refreshData();
     } catch (err) {
-      setError(err.message);
+      showToast("error", err.message);
       await refreshData();
     } finally {
       setBusyHoldId(null);
@@ -143,9 +158,6 @@ function App() {
         </button>
       </header>
 
-      {error && <div className="alert error-alert">{error}</div>}
-      {message && <div className="alert success-alert">{message}</div>}
-
       <section className="panel">
         <div className="section-heading">
           <div>
@@ -161,8 +173,8 @@ function App() {
               id="className"
               value={className}
               onChange={(event) => setClassName(event.target.value)}
-              placeholder="e.g. Class One"
-              maxLength={100}
+              placeholder="e.g. Class 6 - Morning Shift"
+              maxLength={50}
               required
             />
           </div>
@@ -173,6 +185,7 @@ function App() {
               id="totalSeats"
               type="number"
               min="1"
+              max="200"
               value={totalSeats}
               onChange={(event) => setTotalSeats(event.target.value)}
               required
@@ -232,7 +245,6 @@ function App() {
             value={studentId}
             onChange={(event) => {
               setStudentId(event.target.value.replace(/\D/g, "").slice(0, 17));
-              setError("");
             }}
             placeholder="Enter your 17-digit Student ID"
             inputMode="numeric"
@@ -271,6 +283,18 @@ function App() {
       <footer className="app-footer">
         School Admission System · Seat availability refreshes automatically.
       </footer>
+
+      <div className="toast-container">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            id={toast.id}
+            type={toast.type}
+            message={toast.message}
+            onClose={dismissToast}
+          />
+        ))}
+      </div>
     </main>
   );
 }

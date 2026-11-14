@@ -73,3 +73,9 @@ app.UseCors("Frontend");
 app.MapControllers();
 
 app.Run();
+
+
+// Makes Program accessible to integration tests.
+public partial class Program
+{
+}

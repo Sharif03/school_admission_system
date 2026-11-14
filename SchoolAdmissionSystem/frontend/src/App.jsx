@@ -60,11 +60,14 @@ function App() {
   }, [studentId, validStudentId, showToast]);
 
   useEffect(() => {
-    refreshData();
+    const initialFetchId = setTimeout(refreshData, 0);
 
     const intervalId = setInterval(refreshData, 5000);
 
-    return () => clearInterval(intervalId);
+    return () => {
+      clearTimeout(initialFetchId);
+      clearInterval(intervalId);
+    };
   }, [refreshData]);
 
   async function handleCreateClass(event) {

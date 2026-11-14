@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolAdmission.Infrastruct
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolAdmission.API", "backend\SchoolAdmission.API\SchoolAdmission.API.csproj", "{BF86509A-4F92-4085-965F-35A2BDA22496}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolAdmission.Tests", "backend\SchoolAdmission.Tests\SchoolAdmission.Tests.csproj", "{20D62613-5825-4453-B24D-CFDC36DB4FA6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,18 @@ Global
 		{BF86509A-4F92-4085-965F-35A2BDA22496}.Release|x64.Build.0 = Release|Any CPU
 		{BF86509A-4F92-4085-965F-35A2BDA22496}.Release|x86.ActiveCfg = Release|Any CPU
 		{BF86509A-4F92-4085-965F-35A2BDA22496}.Release|x86.Build.0 = Release|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Debug|x64.Build.0 = Debug|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Debug|x86.Build.0 = Debug|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Release|x64.ActiveCfg = Release|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Release|x64.Build.0 = Release|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Release|x86.ActiveCfg = Release|Any CPU
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,5 +94,6 @@ Global
 		{037DAA8C-683B-4D8E-9EA6-B29D027F5468} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
 		{087EC3FD-55F7-43E6-B64A-684237357534} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
 		{BF86509A-4F92-4085-965F-35A2BDA22496} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
+		{20D62613-5825-4453-B24D-CFDC36DB4FA6} = {1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}
 	EndGlobalSection
 EndGlobal

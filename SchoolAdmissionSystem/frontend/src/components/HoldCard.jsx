@@ -26,7 +26,7 @@ function HoldCard({ hold, onConfirm, onCancel, busy }) {
           disabled={!isHeld || busy}
           onClick={() => onConfirm(hold.holdId)}
         >
-          {isConfirmed ? "Already Confirmed" : "Confirm Admission"}
+          {isConfirmed ? "Confirmed" : "ভর্তি ফি দিন"}
         </button>
 
         {isHeld && (
@@ -35,7 +35,7 @@ function HoldCard({ hold, onConfirm, onCancel, busy }) {
             disabled={busy}
             onClick={() => onCancel(hold.holdId)}
           >
-            Cancel
+            বাতিল
           </button>
         )}
       </div>

@@ -1,51 +1,68 @@
 services:
+
+  # PostgreSQL Database
   postgres:
     image: postgres:17-alpine
     container_name: school-admission-db
     restart: unless-stopped
+
     environment:
       POSTGRES_DB: school_admission_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: root
+
     ports:
-      - "5432:5432"
+      - "5433:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d school_admission_db"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # ASP.NET Core Backend API
   backend:
     build:
       context: .
       dockerfile: backend/SchoolAdmission.API/Dockerfile
+
     container_name: school-admission-api
     restart: unless-stopped
+    
     environment:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: Production
       HOLD_DURATION_SECONDS: 600
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=school_admission_db;Username=postgres;Password=postgres"
+
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=school_admission_db;Username=postgres;Password=root"
+    
     ports:
       - "8080:8080"
+    
     depends_on:
       postgres:
         condition: service_healthy
 
+  # React Frontend
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: http://localhost:8080
+
     container_name: school-admission-frontend
+    restart: unless-stopped
+
     ports:
       - "3000:80"
+
     depends_on:
       - backend
-    restart: unless-stopped
     
+# Persistent PostgreSQL storage    
 volumes:
   postgres_data:

@@ -1,19 +1,21 @@
-# Build stage
+# Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+
 WORKDIR /src
 
 # Copy solution and project files
 COPY SchoolAdmissionSystem.sln ./
 
+# Copy project files first for better Docker layer caching
 COPY backend/SchoolAdmission.Domain/SchoolAdmission.Domain.csproj backend/SchoolAdmission.Domain/
 COPY backend/SchoolAdmission.Application/SchoolAdmission.Application.csproj backend/SchoolAdmission.Application/
 COPY backend/SchoolAdmission.Infrastructure/SchoolAdmission.Infrastructure.csproj backend/SchoolAdmission.Infrastructure/
 COPY backend/SchoolAdmission.API/SchoolAdmission.API.csproj backend/SchoolAdmission.API/
 
-# Restore dependencies
+# Restore NuGet dependencies
 RUN dotnet restore SchoolAdmissionSystem.sln
 
-# Copy the remaining source files
+# Copy remaining backend source code
 COPY backend/ backend/
 
 # Publish API
@@ -22,7 +24,7 @@ RUN dotnet publish backend/SchoolAdmission.API/SchoolAdmission.API.csproj \
     -o /app/publish \
     --no-restore
 
-# Runtime stage
+# Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
